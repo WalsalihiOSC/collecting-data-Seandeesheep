@@ -9,7 +9,7 @@ class DataCollectGUI:
 
     def __init__(self, parent):
         # initialising personal data list
-        self.data = []
+        self.person_data = PersonDataStorage()
 
         # initialising data index number
         self.x = 0
@@ -29,6 +29,14 @@ class DataCollectGUI:
         self.name_var = StringVar()
         self.age_var = StringVar()
         self.yes_or_no_var.set('*')
+
+        # initialising widgets for list
+        self.collect_data_widgets = []
+        self.display_data_widgets = []
+
+        """
+        Widgets for collecting data
+        """
 
         # initialising label widgets
         self.collect_data_label = Label(self.main, text="Collecting Person Data", bg=self.BG1, font=self.FONT)
@@ -63,13 +71,42 @@ class DataCollectGUI:
         self.enter_button.grid(row=5, columnspan=2, pady=10)
         self.error_label.grid(row=6, columnspan=2, pady=10)
 
+        # appending collect data widgets
+        self.collect_data_widgets.append(self.name_entry)
+        self.collect_data_widgets.append(self.age_entry)
+        self.collect_data_widgets.append(self.phone_q_label)
+        self.collect_data_widgets.append(self.yes_option)
+        self.collect_data_widgets.append(self.no_option)
+        self.collect_data_widgets.append(self.enter_button)
+        self.collect_data_widgets.append(self.error_label)
+
+        """
+        Widgets for displaying data
+        """
+
+        # initialising label widgets
+        self.display_name_label = Label(self.main, bg=self.BG2)
+        self.display_age_label = Label(self.main, bg=self.BG2)
+        self.display_statement_label = Label(self.main, bg=self.BG2)
+
+        # initialising button widgets
+        self.previous_button = Button(self.main, text='Previous', command=lambda: self.next_display(-1))
+        self.next_button = Button(self.main, text='Next', command=lambda: self.next_display(1))
+
+        # appending display data widgets
+        self.display_data_widgets.append(self.display_name_label)
+        self.display_data_widgets.append(self.display_age_label)
+        self.display_data_widgets.append(self.display_statement_label)
+        self.display_data_widgets.append(self.next_button)
+        self.display_data_widgets.append(self.previous_button)
+
     def enter_data(self):
         name = self.name_var.get()
         age = self.age_var.get()
         phone = self.yes_or_no_var.get()
         if name.isalpha() and age.isnumeric() and phone != '*':
             self.error_label.configure(text="Data entered successfully!")
-            self.data.append(Person(name, age, phone))
+            self.person_data.add_data(name, age, phone)
             self.yes_or_no_var.set('*')
             self.name_entry.delete(0, END)
             self.age_entry.delete(0, END)
@@ -82,69 +119,79 @@ class DataCollectGUI:
                 self.error_label.configure(text="Please select an option for phone availability")
 
     def display(self):
-        if len(self.data) == 0:
+        if len(self.person_data.data) == 0:
             self.error_label.configure(text="No data available to show")
         else:
-
-            # function for binding to next and previous buttons for displaying other data
-            def next_display(n):
-                print(self.x)
-                if self.x == 0 and n == -1:
-                    self.x = len(self.data)-1
-                elif self.x == len(self.data)-1 and n == 1:
-                    self.x = 0
-                else:
-                    self.x += n
-                display_name_label.configure(text=self.data[self.x].name.title())
-                display_age_label.configure(text=self.data[self.x].age)
-                if self.data[self.x].phone == 'Yes':
-                    display_statement_label.configure(text=f"{self.data[self.x].name.title()} does have a mobile phone")
-                else:
-                    display_statement_label.configure(text=f"{self.data[self.x].name.title()} does not have a mobile phone")
-
-
             # destroying unnecessary widgets
-            self.name_entry.destroy()
-            self.age_entry.destroy()
-            self.yes_option.destroy()
-            self.no_option.destroy()
-            self.phone_q_label.destroy()
-            self.enter_button.destroy()
-            self.error_label.destroy()
+            for widget in self.collect_data_widgets:
+                widget.grid_forget()
 
             # reconfiguring widgets
             self.collect_data_label.configure(text="Displaying Person Data")
-            self.show_all_button.configure(text="Add New Person")
-
-            # initialising button widgets
-            previous_button = Button(self.main, text='Previous', command=lambda: next_display(-1))
-            next_button = Button(self.main, text='Next', command=lambda: next_display(1))
-
-            # initialising label widgets
-            display_name_label = Label(self.main, text=self.data[self.x].name.title(), bg=self.BG2)
-            display_age_label = Label(self.main, text=self.data[self.x].age, bg=self.BG2)
-            display_statement_label = Label(self.main, bg=self.BG2)
-            if self.data[self.x].phone == 'Yes':
-                display_statement_label.configure(text=f"{self.data[self.x].name.title()} does have a mobile phone")
-            else:
-                display_statement_label.configure(text=f"{self.data[self.x].name.title()} does not have a mobile phone")
+            self.show_all_button.configure(text="Add New Person", command=self.collect_data)
+            self.display_name_label.configure(text=self.person_data.call_name(self.x))
+            self.display_age_label.configure(text=self.person_data.call_age(self.x))
+            self.display_statement_label.configure(text=self.person_data.phone_statement(self.x))
 
             # widget grid
-            display_name_label.grid(row=1, column=1, pady=6, padx=10)
-            display_age_label.grid(row=2, column=1, pady=6, padx=10)
-            display_statement_label.grid(row=3, columnspan=2, pady=6)
-            previous_button.grid(row=4, column=0, pady=6, padx=10, sticky=W)
-            next_button.grid(row=4, column=1, pady=6, padx=10, sticky=E)
+            self.display_name_label.grid(row=1, column=1, pady=6, padx=10)
+            self.display_age_label.grid(row=2, column=1, pady=6, padx=10)
+            self.display_statement_label.grid(row=3, columnspan=2, pady=6)
+            self.previous_button.grid(row=4, column=0, pady=6, padx=10, sticky=W)
+            self.next_button.grid(row=4, column=1, pady=6, padx=10, sticky=E)
+
+    # function for binding to next and previous buttons for displaying other data
+    def next_display(self, n):
+        if self.x == 0 and n == -1:
+            self.x = len(self.person_data.data) - 1
+        elif self.x == len(self.person_data.data) - 1 and n == 1:
+            self.x = 0
+        else:
+            self.x += n
+        self.display_name_label.configure(text=self.person_data.call_name(self.x))
+        self.display_age_label.configure(text=self.person_data.call_age(self.x))
+        self.display_statement_label.configure(text=self.person_data.phone_statement(self.x))
+
+    def collect_data(self):
+        for widget in self.display_data_widgets:
+            widget.grid_forget()
+
+        # reconfiguring widgets
+        self.collect_data_label.configure(text="Collecting Person Data")
+        self.show_all_button.configure(text="Show All", command=self.display)
+
+        # widget grid
+        self.name_entry.grid(row=1, column=1, pady=6, padx=10)
+        self.age_entry.grid(row=2, column=1, pady=6, padx=10)
+        self.phone_q_label.grid(row=3, pady=6, padx=40, sticky=W)
+        self.yes_option.grid(row=3, column=1, pady=6, sticky=W)
+        self.no_option.grid(row=4, column=1, pady=6, sticky=W)
+        self.enter_button.grid(row=5, columnspan=2, pady=10)
+        self.error_label.grid(row=6, columnspan=2, pady=10)
 
 
-class Person:
-    def __init__(self, name, age, phone_availability):
-        self.name = name
-        self.age = age
-        self.phone = phone_availability
+class PersonDataStorage:
+    def __init__(self):
+        self.data = []
+
+    def add_data(self, name, age, phone_availability):
+        self.data.append((name, age, phone_availability))
+
+    def call_name(self, index):
+        return self.data[index][0].title()
+
+    def call_age(self, index):
+        return self.data[index][1]
+
+    def phone_statement(self, index):
+        if self.data[index][2] == 'Yes':
+            return f"{self.call_name(index)} does have a mobile phone"
+        else:
+            return f"{self.call_name(index)} does not have a mobile phone"
 
 
 # main routine
 root = Tk()
+root.resizable(0, 0)
 DataCollectGUI(root)
 root.mainloop()
