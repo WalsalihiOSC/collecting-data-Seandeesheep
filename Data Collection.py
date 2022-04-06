@@ -105,11 +105,14 @@ class DataCollectGUI:
         age = self.age_var.get()
         phone = self.yes_or_no_var.get()
         if name.isalpha() and age.isnumeric() and phone != '*':
-            self.error_label.configure(text="Data entered successfully!")
-            self.person_data.add_data(name, age, phone)
-            self.yes_or_no_var.set('*')
-            self.name_entry.delete(0, END)
-            self.age_entry.delete(0, END)
+            if int(age) <= 200:
+                self.error_label.configure(text="Data entered successfully!")
+                self.person_data.add_data(name, age, phone)
+                self.yes_or_no_var.set('*')
+                self.name_entry.delete(0, END)
+                self.age_entry.delete(0, END)
+            else:
+                self.error_label.configure(text="You cannot be more than 200 years old")
         else:
             if not name.isalpha():
                 self.error_label.configure(text="Please enter a valid name")
@@ -159,6 +162,7 @@ class DataCollectGUI:
         # reconfiguring widgets
         self.collect_data_label.configure(text="Collecting Person Data")
         self.show_all_button.configure(text="Show All", command=self.display)
+        self.error_label.configure(text='Please answer all the fields before entering data')
 
         # widget grid
         self.name_entry.grid(row=1, column=1, pady=6, padx=10)
